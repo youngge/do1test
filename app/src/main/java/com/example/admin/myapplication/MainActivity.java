@@ -15,7 +15,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class MainActivity extends AppCompatActivity implements MainView {
 
     private TextView mTextMessage;
-    private String baseURL = "https://api.douban.com/v2/movie/2444";
+    private String baseURL = "https://api.douban.com/v2/movie/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
