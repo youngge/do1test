@@ -1,5 +1,6 @@
 package com.example.admin.myapplication;
 
+import android.animation.ObjectAnimator;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -33,6 +34,9 @@ public class MainActivity extends AppCompatActivity implements MainView {
     private String baseURL = "https://api.douban.com/v2/movie/";
     private String picurl = "http://cn.bing.com/az/hprichbg/rb/AvalancheCreek_ROW11173354624_1920x1080.jpg";
 
+    private int x=0;
+    private int y=0;
+
     private Handler mHandler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
@@ -45,8 +49,6 @@ public class MainActivity extends AppCompatActivity implements MainView {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         if (Build.VERSION.SDK_INT>=21) {
-            getWindow().setNavigationBarColor(Color.BLUE);
-            getWindow().setStatusBarColor(Color.GRAY);
             View decorView = getWindow().getDecorView();
             int option = View.SYSTEM_UI_FLAG_FULLSCREEN;
             decorView.setSystemUiVisibility(option);
@@ -89,23 +91,24 @@ public class MainActivity extends AppCompatActivity implements MainView {
             sb.append(subjectsBean.getTitle() + "-" + subjectsBean.getRating().getAverage() + "\n");
         }
         mTextMessage.setText("onResponse\n" + sb.toString());
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("title")
-                .setMessage("message")
-                .setPositiveButton("ok", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Snackbar.make(mTextMessage, "ok", Snackbar.LENGTH_SHORT).show();
-                    }
-                })
-                .create()
-                .show();
+        ObjectAnimator animator = ObjectAnimator.ofFloat(mTextMessage,"rotation",1f,0f,0.5f,0f,1f);
+        animator.setDuration(6000);
+        animator.start();
 
     }
 
     @Override
     public void getMovieOnFailed(Call<MovieEntity> call, Throwable t) {
         mTextMessage.setText("onFailure\n" + t.getMessage());
+    }
+
+    public void scrollto(View view) {
+        x+=20;
+        y+=20;
+        mImageView.scrollTo(20,20);
+    }
+
+    public void scrollby(View view) {
+        mImageView.scrollBy(20,20);
     }
 }
