@@ -1,25 +1,28 @@
 package com.example.admin.myapplication;
 
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.bitmap.BitmapTransformation;
-
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 
-import jp.wasabeef.glide.transformations.BlurTransformation;
-import jp.wasabeef.glide.transformations.ColorFilterTransformation;
-import jp.wasabeef.glide.transformations.CropCircleTransformation;
-import jp.wasabeef.glide.transformations.GrayscaleTransformation;
-import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
-import jp.wasabeef.glide.transformations.gpu.ToonFilterTransformation;
 import retrofit2.Call;
 import retrofit2.Response;
 
@@ -30,10 +33,25 @@ public class MainActivity extends AppCompatActivity implements MainView {
     private String baseURL = "https://api.douban.com/v2/movie/";
     private String picurl = "http://cn.bing.com/az/hprichbg/rb/AvalancheCreek_ROW11173354624_1920x1080.jpg";
 
+    private Handler mHandler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            mImageView.setImageBitmap((Bitmap) msg.obj);
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        if (Build.VERSION.SDK_INT>=21) {
+            getWindow().setNavigationBarColor(Color.BLUE);
+            getWindow().setStatusBarColor(Color.GRAY);
+            View decorView = getWindow().getDecorView();
+            int option = View.SYSTEM_UI_FLAG_FULLSCREEN;
+            decorView.setSystemUiVisibility(option);
+        }
+
 
         mTextMessage = (TextView) findViewById(R.id.message);
         mImageView = (ImageView) findViewById(R.id.iv_test);
@@ -41,6 +59,24 @@ public class MainActivity extends AppCompatActivity implements MainView {
         MainPresenter mainPresenter = new MainPresenter(this);
         mainPresenter.getMovie(baseURL);
 
+        new Thread(){
+            @Override
+            public void run() {
+                try {
+                    URL url = new URL(picurl);
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    InputStream is = conn.getInputStream();
+                    Bitmap bitmap = BitmapFactory.decodeStream(is);
+                    Message m = Message.obtain();
+                    m.obj = bitmap;
+                    mHandler.sendMessage(m);
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
     }
 
     @Override
@@ -53,11 +89,6 @@ public class MainActivity extends AppCompatActivity implements MainView {
             sb.append(subjectsBean.getTitle() + "-" + subjectsBean.getRating().getAverage() + "\n");
         }
         mTextMessage.setText("onResponse\n" + sb.toString());
-        Glide.with(this)
-                .load(picurl)
-                .bitmapTransform(new BlurTransformation(this,5)
-                        , new RoundedCornersTransformation(this, 40, 20))
-                .into(mImageView);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("title")
@@ -65,11 +96,12 @@ public class MainActivity extends AppCompatActivity implements MainView {
                 .setPositiveButton("ok", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Snackbar.make(mTextMessage,"ok",Snackbar.LENGTH_SHORT).show();
+                        Snackbar.make(mTextMessage, "ok", Snackbar.LENGTH_SHORT).show();
                     }
                 })
                 .create()
                 .show();
+
     }
 
     @Override
